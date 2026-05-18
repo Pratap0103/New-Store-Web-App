@@ -1,4 +1,5 @@
 import React from 'react';
+import { XCircle, Save, Check } from 'lucide-react';
 
 /**
  * TabSwitcher Component - Standardized Tabs for Pending/History
@@ -34,17 +35,26 @@ export const FormActionButtons = ({
   submitText = 'Save Changes',
   loading = false,
   className = "",
-  formId = null
+  formId = null,
+  extraButton = null
 }) => {
   return (
     <div className={`flex gap-3 items-center ${className}`}>
       <button
         type="button"
         onClick={onCancel}
-        className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-gray-500 font-bold hover:bg-gray-50 transition-all active:scale-95 text-xs uppercase tracking-widest"
+        className="flex-1 px-2 md:px-4 py-2 border border-gray-200 rounded-lg text-gray-500 font-bold hover:bg-gray-50 transition-all active:scale-95 text-xs uppercase tracking-widest flex items-center justify-center gap-2"
       >
-        {cancelText}
+        <XCircle size={18} className="block md:hidden" />
+        <span className="hidden md:block">{cancelText}</span>
       </button>
+
+      {extraButton && (
+        <div className="flex-1 flex w-full justify-center">
+          {extraButton}
+        </div>
+      )}
+
       <button
         type={onSubmit ? "button" : "submit"}
         form={formId}
@@ -54,11 +64,14 @@ export const FormActionButtons = ({
       >
         {loading ? (
           <>
-            <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            <span>Processing...</span>
+            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <span className="hidden md:block">Processing...</span>
           </>
         ) : (
-          submitText
+          <>
+            <Save size={18} className="block md:hidden" />
+            <span className="hidden md:block">{submitText}</span>
+          </>
         )}
       </button>
     </div>

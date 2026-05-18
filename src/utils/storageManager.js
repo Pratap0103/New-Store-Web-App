@@ -18,7 +18,16 @@ const STORAGE_KEYS = {
   TERMS_CONDITIONS: 'pcb_terms_conditions_v1',
   LIFTING: 'pcb_lifting_v1',
   STORE_IN: 'pcb_store_in_v1',
-  DIRECT_STORE_IN: 'pcb_direct_store_in_v1'
+  DIRECT_STORE_IN: 'pcb_direct_store_in_v1',
+  PAYMENTS: 'pcb_payments_v1',
+  REJECT_GRN: 'pcb_reject_grn_v1',
+  DEBIT_NOTES: 'pcb_debit_notes_v1',
+  TALLY_ENTRIES: 'pcb_tally_entries_v1',
+  BILL_NOT_RECEIVED: 'pcb_bill_not_received_v1',
+  STORE_ISSUES: 'pcb_store_issues_v1',
+  STORE_RETURNS: 'pcb_store_issue_returns_v1',
+  INVENTORY: 'pcb_inventory_v1',
+  QUOTATION_HISTORY: 'pcb_quotation_history_v1'
 };
 
 // Initialize default data
@@ -97,6 +106,12 @@ export const initializeStorage = () => {
     localStorage.setItem(STORAGE_KEYS.INDENTS, JSON.stringify(migratedIndents));
     console.log('Migration Complete: JJSPL updated to Botivate');
   }
+
+  // Pre-seed new modules on startup
+  getBillNotReceived();
+  getStoreIssues();
+  getStoreReturns();
+  getInventory();
 };
 
 // Get data from storage
@@ -1159,3 +1174,1087 @@ export const saveDirectStoreInRecord = (record) => {
   records.push({ ...record, id: `DIR-${Date.now()}` });
   saveDirectStoreInRecords(records);
 };
+
+// Payment operations
+export const getPayments = () => {
+  const payments = getFromStorage(STORAGE_KEYS.PAYMENTS) || [];
+  const DATA_VERSION = 'v1_payments';
+  const currentVersion = getFromStorage('payments_version');
+
+  if (payments.length < 1 || currentVersion !== DATA_VERSION) {
+    const storeIn = getStoreInRecords().filter(r => r.hodStatus === 'Approved');
+    const direct = getDirectStoreInRecords();
+    
+    const dummy = [];
+    let paymentCount = 0;
+
+    // Seed some payments for Store In
+    storeIn.slice(0, 5).forEach((record, i) => {
+      paymentCount++;
+      dummy.push({
+        id: `PAY-${Date.now()}-${paymentCount}`,
+        referenceId: record.id,
+        referenceType: 'STORE_IN',
+        timestamp: new Date(Date.now() - i * 86400000).toISOString(),
+        paymentNo: `PAY-2026-${String(paymentCount).padStart(3, '0')}`,
+        paymentCount: 1,
+        paidAmount: record.totalAmount || record.billAmount || 1500,
+        pendingAmount: 0,
+        paymentStatus: 'Paid',
+        attachment: '',
+        remarks: 'Dummy seeded payment for Store In'
+      });
+    });
+
+    // Seed some payments for Direct Store In
+    direct.slice(0, 3).forEach((record, i) => {
+      paymentCount++;
+      dummy.push({
+        id: `PAY-${Date.now()}-${paymentCount}`,
+        referenceId: record.id,
+        referenceType: 'DIRECT_STORE_IN',
+        timestamp: new Date(Date.now() - i * 86400000).toISOString(),
+        paymentNo: `PAY-2026-${String(paymentCount).padStart(3, '0')}`,
+        paymentCount: 1,
+        paidAmount: record.billAmount || 500,
+        pendingAmount: 0,
+        paymentStatus: 'Paid',
+        attachment: '',
+        remarks: 'Dummy seeded payment for Direct Store In'
+      });
+    });
+
+    saveToStorage(STORAGE_KEYS.PAYMENTS, dummy);
+    saveToStorage('payments_version', DATA_VERSION);
+    return dummy;
+  }
+  return payments;
+};
+export const savePayments = (records) => saveToStorage(STORAGE_KEYS.PAYMENTS, records);
+export const savePayment = (record) => {
+  const records = getPayments();
+  records.push({ ...record, id: `PAY-${Date.now()}` });
+  savePayments(records);
+};
+
+// Reject GRN Operations
+export const getRejectGRNRecords = () => {
+  const records = getFromStorage(STORAGE_KEYS.REJECT_GRN) || [];
+  const DATA_VERSION = 'v1_reject_grn';
+  const currentVersion = getFromStorage('reject_grn_version');
+
+  if (records.length < 1 || currentVersion !== DATA_VERSION) {
+    const storeIn = getStoreInRecords().filter(r => r.hodStatus === 'Rejected');
+    const dummy = [];
+
+    // Seed some history records
+    storeIn.slice(0, 2).forEach((record, i) => {
+      dummy.push({
+        id: `RGRN-${Date.now()}-${i}`,
+        referenceId: record.id,
+        timestamp: new Date(Date.now() - i * 86400000).toISOString(),
+        grnStatus: 'Reject',
+        reason: 'Quantity mismatch is severe',
+        debitNoteSent: 'Yes',
+        attachment: ''
+      });
+    });
+
+    saveToStorage(STORAGE_KEYS.REJECT_GRN, dummy);
+    saveToStorage('reject_grn_version', DATA_VERSION);
+    return dummy;
+  }
+  return records;
+};
+
+export const saveRejectGRNRecords = (records) => saveToStorage(STORAGE_KEYS.REJECT_GRN, records);
+export const saveRejectGRNRecord = (record) => {
+  const records = getRejectGRNRecords();
+  records.push({ ...record, id: `RGRN-${Date.now()}` });
+  saveRejectGRNRecords(records);
+};
+
+// Debit Note Operations
+export const getDebitNotes = () => {
+  const records = getFromStorage(STORAGE_KEYS.DEBIT_NOTES) || [];
+  const DATA_VERSION = 'v1_debit_notes';
+  const currentVersion = getFromStorage('debit_notes_version');
+
+  if (records.length < 1 || currentVersion !== DATA_VERSION) {
+    const lifting = getLiftingRecords();
+    const dummy = [];
+
+    lifting.slice(0, 5).forEach((record, i) => {
+      dummy.push({
+        id: `DN-${Date.now()}-${i}`,
+        liftNumber: record.id || `LIFT-DUMMY-${i}`,
+        indentNo: record.indentNo || `IN-${String(i + 1).padStart(3, '0')}`,
+        projectName: record.projectName || record.firmName || 'Botivate',
+        firmName: record.firmName || 'Botivate Services',
+        billNo: record.billNumber || `BILL-${1000 + i}`,
+        vendorName: record.vendorName,
+        productName: record.items?.[0]?.productName || 'Electronic Component',
+        qty: record.items?.[0]?.liftQty || 50,
+        typeOfBill: 'Tax Invoice',
+        billAmount: record.billAmount || '1500.00',
+        paymentType: '30 Days Credit',
+        advanceAmount: '₹0.00',
+        photoOfBill: '',
+        transportation: 'Yes',
+        transporterName: record.transporterName || 'Express Logistics',
+        amount: record.totalAmount || record.billAmount || '1500.00',
+        reason: 'Material rejected due to physical check failure',
+        plannedDate: '22/05/2026',
+        debitNoteNo: `DN-2026-${String(i + 1).padStart(3, '0')}`,
+        debitNoteCopy: 'debit_note_copy.pdf',
+        status: 'Sent',
+        statusPurchaser: 'Approved',
+        billCopy: 'bill_copy.pdf',
+        returnCopy: 'return_challan.pdf',
+        timestamp: new Date(Date.now() - (i + 1) * 86400000).toISOString()
+      });
+    });
+
+    saveToStorage(STORAGE_KEYS.DEBIT_NOTES, dummy);
+    saveToStorage('debit_notes_version', DATA_VERSION);
+    return dummy;
+  }
+  return records;
+};
+
+export const saveDebitNotes = (records) => saveToStorage(STORAGE_KEYS.DEBIT_NOTES, records);
+export const saveDebitNote = (record) => {
+  const records = getDebitNotes();
+  records.push({
+    ...record,
+    id: record.id || `DN-${Date.now()}`,
+    timestamp: new Date().toISOString()
+  });
+  saveDebitNotes(records);
+};
+
+// Tally & Audit Data Operations
+export const getTallyEntries = () => {
+  const records = getFromStorage(STORAGE_KEYS.TALLY_ENTRIES) || [];
+  const DATA_VERSION = 'v1_tally_entries';
+  const currentVersion = getFromStorage('tally_entries_version');
+
+  if (records.length < 1 || currentVersion !== DATA_VERSION) {
+    const dummy = [
+      {
+        id: 'TALLY-101',
+        indentNumber: 'IN-001',
+        indentDate: '2026-05-01T09:00:00Z',
+        purchaseDate: '2026-05-02T10:00:00Z',
+        materialInDate: '2026-05-04T12:00:00Z',
+        plannedDate: '2026-05-15T09:00:00Z',
+        productName: 'Cement OPC 53 Grade',
+        firmNameMatch: 'Pratap Engineering Site A',
+        billNo: 'BILL-9982',
+        qty: 150,
+        partyName: 'UltraTech Cement Ltd',
+        billAmt: 67500.00,
+        billImage: '',
+        billReceivedLater: 'No',
+        location: 'Main Warehouse A',
+        typeOfBills: 'Tax Invoice',
+        productImage: '',
+        area: 'Foundations Block 1',
+        indentedFor: 'Slab reinforcement',
+        approvedPartyName: 'UltraTech Cement Ltd',
+        rate: 450.00,
+        indentQty: 150,
+        totalRate: 67500.00,
+        liftNumber: 'LIFT-8821',
+        poNumber: 'PO-2026-101',
+        currentStage: 'AUDIT',
+        isCompleted: false,
+        planned1: '2026-05-15T09:00:00Z',
+        actual1: '',
+        status1: '',
+        remarks1: '',
+        planned2: '',
+        actual2: '',
+        status2: '',
+        remarks2: '',
+        planned3: '',
+        actual3: '',
+        status3: '',
+        remarks3: '',
+        planned4: '',
+        actual4: '',
+        status4: '',
+        remarks4: '',
+        planned5: '',
+        actual5: '',
+        status5: '',
+        remarks5: '',
+        timestamp: '2026-05-04T12:00:00Z',
+        damageOrder: 'Yes',
+        quantityAsPerBill: 'Yes',
+        priceAsPerPoCheck: 'Yes',
+        hodStatus: 'Approved',
+        hodRemark: 'Audit looks clean.',
+        receivingStatus: 'Received',
+        receivedQuantity: 150
+      },
+      {
+        id: 'TALLY-102',
+        indentNumber: 'IN-002',
+        indentDate: '2026-05-02T09:00:00Z',
+        purchaseDate: '2026-05-03T10:00:00Z',
+        materialInDate: '2026-05-05T12:00:00Z',
+        plannedDate: '2026-05-16T10:00:00Z',
+        productName: 'Reinforcement Steel 12mm',
+        firmNameMatch: 'Botivate Products Site B',
+        billNo: 'BILL-4451',
+        qty: 500,
+        partyName: 'Tata Steel Ltd',
+        billAmt: 275000.00,
+        billImage: '',
+        billReceivedLater: 'No',
+        location: 'Central Yard B',
+        typeOfBills: 'Tax Invoice',
+        productImage: '',
+        area: 'Block 2 Columns',
+        indentedFor: 'Core columns',
+        approvedPartyName: 'Tata Steel Ltd',
+        rate: 550.00,
+        indentQty: 500,
+        totalRate: 275000.00,
+        liftNumber: 'LIFT-2291',
+        poNumber: 'PO-2026-102',
+        currentStage: 'AUDIT',
+        isCompleted: false,
+        planned1: '2026-05-16T10:00:00Z',
+        actual1: '',
+        status1: '',
+        remarks1: '',
+        planned2: '',
+        actual2: '',
+        status2: '',
+        remarks2: '',
+        planned3: '',
+        actual3: '',
+        status3: '',
+        remarks3: '',
+        planned4: '',
+        actual4: '',
+        status4: '',
+        remarks4: '',
+        planned5: '',
+        actual5: '',
+        status5: '',
+        remarks5: '',
+        timestamp: '2026-05-05T12:00:00Z',
+        damageOrder: 'Yes',
+        quantityAsPerBill: 'Yes',
+        priceAsPerPoCheck: 'Yes',
+        hodStatus: 'Approved',
+        hodRemark: 'Matches PO values.',
+        receivingStatus: 'Received',
+        receivedQuantity: 500
+      },
+      {
+        id: 'TALLY-103',
+        indentNumber: 'IN-003',
+        indentDate: '2026-05-03T09:00:00Z',
+        purchaseDate: '2026-05-04T10:00:00Z',
+        materialInDate: '2026-05-06T12:00:00Z',
+        plannedDate: '2026-05-12T09:00:00Z',
+        productName: 'Electrical Conduit Pipe 25mm',
+        firmNameMatch: 'Pratap Engineering Site A',
+        billNo: 'BILL-2231',
+        qty: 120,
+        partyName: 'Havells India Ltd',
+        billAmt: 14400.00,
+        billImage: '',
+        billReceivedLater: 'No',
+        location: 'Main Warehouse A',
+        typeOfBills: 'Tax Invoice',
+        productImage: '',
+        area: 'Block 1 Basements',
+        indentedFor: 'Basement wiring',
+        approvedPartyName: 'Havells India Ltd',
+        rate: 120.00,
+        indentQty: 120,
+        totalRate: 14400.00,
+        liftNumber: 'LIFT-8872',
+        poNumber: 'PO-2026-103',
+        currentStage: 'RECTIFY',
+        isCompleted: false,
+        planned1: '2026-05-10T09:00:00Z',
+        actual1: '2026-05-11T11:00:00Z',
+        status1: 'Not Done',
+        remarks1: 'Price on invoice varies from PO rate. Requires supplier rectification.',
+        planned2: '2026-05-12T09:00:00Z',
+        actual2: '',
+        status2: '',
+        remarks2: '',
+        planned3: '',
+        actual3: '',
+        status3: '',
+        remarks3: '',
+        planned4: '',
+        actual4: '',
+        status4: '',
+        remarks4: '',
+        planned5: '',
+        actual5: '',
+        status5: '',
+        remarks5: '',
+        timestamp: '2026-05-06T12:00:00Z',
+        damageOrder: 'Yes',
+        quantityAsPerBill: 'Yes',
+        priceAsPerPoCheck: 'No',
+        hodStatus: 'Pending',
+        hodRemark: 'Needs rate adjustment.',
+        receivingStatus: 'Received',
+        receivedQuantity: 120
+      },
+      {
+        id: 'TALLY-104',
+        indentNumber: 'IN-004',
+        indentDate: '2026-05-04T09:00:00Z',
+        purchaseDate: '2026-05-05T10:00:00Z',
+        materialInDate: '2026-05-07T12:00:00Z',
+        plannedDate: '2026-05-13T09:00:00Z',
+        productName: 'PVC Pipes 4-inch',
+        firmNameMatch: 'BuildCon Solutions',
+        billNo: 'BILL-1109',
+        qty: 80,
+        partyName: 'Supreme Industries',
+        billAmt: 24000.00,
+        billImage: '',
+        billReceivedLater: 'No',
+        location: 'Plumbing Bay',
+        typeOfBills: 'Tax Invoice',
+        productImage: '',
+        area: 'Drainage Phase 1',
+        indentedFor: 'Main outlet drain',
+        approvedPartyName: 'Supreme Industries',
+        rate: 300.00,
+        indentQty: 100,
+        totalRate: 30000.00,
+        liftNumber: 'LIFT-0091',
+        poNumber: 'PO-2026-104',
+        currentStage: 'RECTIFY',
+        isCompleted: false,
+        planned1: '2026-05-11T09:00:00Z',
+        actual1: '2026-05-12T14:30:00Z',
+        status1: 'Not Done',
+        remarks1: 'Quantity is 20 short in bill. Need credit note or bill correction.',
+        planned2: '2026-05-13T09:00:00Z',
+        actual2: '',
+        status2: '',
+        remarks2: '',
+        planned3: '',
+        actual3: '',
+        status3: '',
+        remarks3: '',
+        planned4: '',
+        actual4: '',
+        status4: '',
+        remarks4: '',
+        planned5: '',
+        actual5: '',
+        status5: '',
+        remarks5: '',
+        timestamp: '2026-05-07T12:00:00Z',
+        damageOrder: 'Yes',
+        quantityAsPerBill: 'No',
+        priceAsPerPoCheck: 'Yes',
+        hodStatus: 'Approved',
+        hodRemark: 'Bill count is short.',
+        receivingStatus: 'Received',
+        receivedQuantity: 80
+      },
+      {
+        id: 'TALLY-105',
+        indentNumber: 'IN-005',
+        indentDate: '2026-05-05T09:00:00Z',
+        purchaseDate: '2026-05-06T10:00:00Z',
+        materialInDate: '2026-05-08T12:00:00Z',
+        plannedDate: '2026-05-11T09:00:00Z',
+        productName: 'Submersible Pump 5HP',
+        firmNameMatch: 'Pratap Engineering Site A',
+        billNo: 'BILL-8812',
+        qty: 2,
+        partyName: 'Kirloskar Brothers Ltd',
+        billAmt: 90000.00,
+        billImage: '',
+        billReceivedLater: 'No',
+        location: 'Pump House 1',
+        typeOfBills: 'Tax Invoice',
+        productImage: '',
+        area: 'Borewell 2',
+        indentedFor: 'Site dewatering',
+        approvedPartyName: 'Kirloskar Brothers Ltd',
+        rate: 45000.00,
+        indentQty: 2,
+        totalRate: 90000.00,
+        liftNumber: 'LIFT-4432',
+        poNumber: 'PO-2026-105',
+        currentStage: 'REAUDIT',
+        isCompleted: false,
+        planned1: '2026-05-08T09:00:00Z',
+        actual1: '2026-05-09T10:00:00Z',
+        status1: 'Not Done',
+        remarks1: 'Missing manual warranty/challan copy in attachments.',
+        planned2: '2026-05-09T12:00:00Z',
+        actual2: '2026-05-10T11:30:00Z',
+        status2: 'Done',
+        remarks2: 'Supplier provided warranty certificate scan, uploaded to folder.',
+        planned3: '2026-05-11T09:00:00Z',
+        actual3: '',
+        status3: '',
+        remarks3: '',
+        planned4: '',
+        actual4: '',
+        status4: '',
+        remarks4: '',
+        planned5: '',
+        actual5: '',
+        status5: '',
+        remarks5: '',
+        timestamp: '2026-05-08T12:00:00Z',
+        damageOrder: 'Yes',
+        quantityAsPerBill: 'Yes',
+        priceAsPerPoCheck: 'Yes',
+        hodStatus: 'Approved',
+        hodRemark: 'Warranty verified.',
+        receivingStatus: 'Received',
+        receivedQuantity: 2
+      },
+      {
+        id: 'TALLY-106',
+        indentNumber: 'IN-006',
+        indentDate: '2026-05-06T09:00:00Z',
+        purchaseDate: '2026-05-07T10:00:00Z',
+        materialInDate: '2026-05-09T12:00:00Z',
+        plannedDate: '2026-05-12T09:00:00Z',
+        productName: 'Structural I-Beams',
+        firmNameMatch: 'Botivate Products Site B',
+        billNo: 'BILL-6609',
+        qty: 12,
+        partyName: 'Jindal Steel & Power',
+        billAmt: 420000.00,
+        billImage: '',
+        billReceivedLater: 'No',
+        location: 'Heavy Storage Zone',
+        typeOfBills: 'Tax Invoice',
+        productImage: '',
+        area: 'Roof Truss Block C',
+        indentedFor: 'Structural columns Frame',
+        approvedPartyName: 'Jindal Steel & Power',
+        rate: 35000.00,
+        indentQty: 12,
+        totalRate: 420000.00,
+        liftNumber: 'LIFT-9912',
+        poNumber: 'PO-2026-106',
+        currentStage: 'TALLY_ENTRY',
+        isCompleted: false,
+        planned1: '2026-05-10T09:00:00Z',
+        actual1: '2026-05-11T12:00:00Z',
+        status1: 'Done',
+        remarks1: 'Dimensions and weight verified by technical team.',
+        planned2: '',
+        actual2: '',
+        status2: '',
+        remarks2: '',
+        planned3: '',
+        actual3: '',
+        status3: '',
+        remarks3: '',
+        planned4: '2026-05-12T09:00:00Z',
+        actual4: '',
+        status4: '',
+        remarks4: '',
+        planned5: '',
+        actual5: '',
+        status5: '',
+        remarks5: '',
+        timestamp: '2026-05-09T12:00:00Z',
+        damageOrder: 'Yes',
+        quantityAsPerBill: 'Yes',
+        priceAsPerPoCheck: 'Yes',
+        hodStatus: 'Approved',
+        hodRemark: 'Excellent grade steel.',
+        receivingStatus: 'Received',
+        receivedQuantity: 12
+      },
+      {
+        id: 'TALLY-107',
+        indentNumber: 'IN-007',
+        indentDate: '2026-05-07T09:00:00Z',
+        purchaseDate: '2026-05-08T10:00:00Z',
+        materialInDate: '2026-05-10T12:00:00Z',
+        plannedDate: '2026-05-11T09:00:00Z',
+        productName: 'Galvanized Cable Trays',
+        firmNameMatch: 'Pratap Engineering Site A',
+        billNo: 'BILL-3312',
+        qty: 60,
+        partyName: 'Legrand India',
+        billAmt: 48000.00,
+        billImage: '',
+        billReceivedLater: 'No',
+        location: 'Main Warehouse A',
+        typeOfBills: 'Tax Invoice',
+        productImage: '',
+        area: 'Block 2 Electrical Rooms',
+        indentedFor: 'HVAC power cables support',
+        approvedPartyName: 'Legrand India',
+        rate: 800.00,
+        indentQty: 60,
+        totalRate: 48000.00,
+        liftNumber: 'LIFT-0028',
+        poNumber: 'PO-2026-107',
+        currentStage: 'TALLY_ENTRY',
+        isCompleted: false,
+        planned1: '2026-05-05T09:00:00Z',
+        actual1: '2026-05-06T10:00:00Z',
+        status1: 'Not Done',
+        remarks1: 'Requires project manager dual signature on physical copy.',
+        planned2: '2026-05-07T09:00:00Z',
+        actual2: '2026-05-08T15:00:00Z',
+        status2: 'Done',
+        remarks2: 'Signature obtained and verified.',
+        planned3: '2026-05-09T09:00:00Z',
+        actual3: '2026-05-10T11:00:00Z',
+        status3: 'Done',
+        remarks3: 'Re-audit passed successfully.',
+        planned4: '2026-05-11T09:00:00Z',
+        actual4: '',
+        status4: '',
+        remarks4: '',
+        planned5: '',
+        actual5: '',
+        status5: '',
+        remarks5: '',
+        timestamp: '2026-05-10T12:00:00Z',
+        damageOrder: 'Yes',
+        quantityAsPerBill: 'Yes',
+        priceAsPerPoCheck: 'Yes',
+        hodStatus: 'Approved',
+        hodRemark: 'Signed physical copy received.',
+        receivingStatus: 'Received',
+        receivedQuantity: 60
+      },
+      {
+        id: 'TALLY-108',
+        indentNumber: 'IN-008',
+        indentDate: '2026-05-08T09:00:00Z',
+        purchaseDate: '2026-05-09T10:00:00Z',
+        materialInDate: '2026-05-11T12:00:00Z',
+        plannedDate: '2026-05-10T09:00:00Z',
+        productName: 'Led Tube Lights 20W',
+        firmNameMatch: 'Botivate Products Site B',
+        billNo: 'BILL-4491',
+        qty: 300,
+        partyName: 'Philips Lighting',
+        billAmt: 60000.00,
+        billImage: '',
+        billReceivedLater: 'No',
+        location: 'Electrical Bay B',
+        typeOfBills: 'Tax Invoice',
+        productImage: '',
+        area: 'Office building internal',
+        indentedFor: 'Main ceiling lights',
+        approvedPartyName: 'Philips Lighting',
+        rate: 200.00,
+        indentQty: 300,
+        totalRate: 60000.00,
+        liftNumber: 'LIFT-3819',
+        poNumber: 'PO-2026-108',
+        currentStage: 'AGAIN_AUDIT',
+        isCompleted: false,
+        planned1: '2026-05-06T09:00:00Z',
+        actual1: '2026-05-07T10:00:00Z',
+        status1: 'Done',
+        remarks1: 'Audit clear. Lighting specs checked.',
+        planned2: '',
+        actual2: '',
+        status2: '',
+        remarks2: '',
+        planned3: '',
+        actual3: '',
+        status3: '',
+        remarks3: '',
+        planned4: '2026-05-08T09:00:00Z',
+        actual4: '2026-05-09T13:00:00Z',
+        status4: 'Done',
+        remarks4: 'ERP logged. Voucher #T-5591.',
+        planned5: '2026-05-10T09:00:00Z',
+        actual5: '',
+        status5: '',
+        remarks5: '',
+        timestamp: '2026-05-11T12:00:00Z',
+        damageOrder: 'Yes',
+        quantityAsPerBill: 'Yes',
+        priceAsPerPoCheck: 'Yes',
+        hodStatus: 'Approved',
+        hodRemark: 'Voucher verified.',
+        receivingStatus: 'Received',
+        receivedQuantity: 300
+      },
+      {
+        id: 'TALLY-109',
+        indentNumber: 'IN-009',
+        indentDate: '2026-05-01T09:00:00Z',
+        purchaseDate: '2026-05-02T10:00:00Z',
+        materialInDate: '2026-05-03T12:00:00Z',
+        plannedDate: '2026-05-05T09:00:00Z',
+        productName: 'Ready Mix Concrete M25',
+        firmNameMatch: 'BuildCon Solutions',
+        billNo: 'BILL-0992',
+        qty: 50,
+        partyName: 'Lafarge Holcim',
+        billAmt: 195000.00,
+        billImage: '',
+        billReceivedLater: 'No',
+        location: 'Foundation Block C',
+        typeOfBills: 'Tax Invoice',
+        productImage: '',
+        area: 'Ground slab foundations',
+        indentedFor: 'Main structural floor',
+        approvedPartyName: 'Lafarge Holcim',
+        rate: 3900.00,
+        indentQty: 50,
+        totalRate: 195000.00,
+        liftNumber: 'LIFT-1102',
+        poNumber: 'PO-2026-109',
+        currentStage: 'COMPLETED',
+        isCompleted: true,
+        planned1: '2026-05-01T09:00:00Z',
+        actual1: '2026-05-02T10:00:00Z',
+        status1: 'Done',
+        remarks1: 'Slab casting successful. Cube test results attached.',
+        planned2: '',
+        actual2: '',
+        status2: '',
+        remarks2: '',
+        planned3: '',
+        actual3: '',
+        status3: '',
+        remarks3: '',
+        planned4: '2026-05-03T09:00:00Z',
+        actual4: '2026-05-04T12:00:00Z',
+        status4: 'Done',
+        remarks4: 'Tally Entry complete under voucher #V-11883.',
+        planned5: '2026-05-05T09:00:00Z',
+        actual5: '2026-05-06T15:00:00Z',
+        status5: 'okay',
+        remarks5: 'Final audit check passed. Perfect matching.',
+        timestamp: '2026-05-03T12:00:00Z',
+        damageOrder: 'Yes',
+        quantityAsPerBill: 'Yes',
+        priceAsPerPoCheck: 'Yes',
+        hodStatus: 'Approved',
+        hodRemark: 'Cube test verified.',
+        receivingStatus: 'Received',
+        receivedQuantity: 50
+      }
+    ];
+
+    saveToStorage(STORAGE_KEYS.TALLY_ENTRIES, dummy);
+    saveToStorage('tally_entries_version', DATA_VERSION);
+    return dummy;
+  }
+  return records;
+};
+
+export const saveTallyEntries = (records) => saveToStorage(STORAGE_KEYS.TALLY_ENTRIES, records);
+
+export const updateTallyEntry = (id, updates) => {
+  const records = getTallyEntries();
+  const index = records.findIndex(r => r.id === id || String(r.id) === String(id));
+  if (index !== -1) {
+    const item = { ...records[index], ...updates };
+
+    // Dynamically transition stages
+    const hasValue = (val) => val !== undefined && val !== null && val !== '' && String(val).trim() !== '';
+    const isAuditDone = String(item.status1 || '').toLowerCase() === 'done';
+
+    if (hasValue(item.actual5)) {
+      item.currentStage = 'COMPLETED';
+      item.isCompleted = true;
+    } else if (hasValue(item.actual4)) {
+      item.currentStage = 'AGAIN_AUDIT';
+      if (!hasValue(item.planned5)) {
+        item.planned5 = new Date().toISOString();
+      }
+    } else if (hasValue(item.actual3)) {
+      item.currentStage = 'TALLY_ENTRY';
+      if (!hasValue(item.planned4)) {
+        item.planned4 = new Date().toISOString();
+      }
+    } else if (hasValue(item.actual2)) {
+      item.currentStage = 'REAUDIT';
+      if (!hasValue(item.planned3)) {
+        item.planned3 = new Date().toISOString();
+      }
+    } else if (hasValue(item.actual1)) {
+      if (isAuditDone) {
+        item.currentStage = 'TALLY_ENTRY';
+        if (!hasValue(item.planned4)) {
+          item.planned4 = new Date().toISOString();
+        }
+      } else {
+        item.currentStage = 'RECTIFY';
+        if (!hasValue(item.planned2)) {
+          item.planned2 = new Date().toISOString();
+        }
+      }
+    } else {
+      item.currentStage = 'AUDIT';
+    }
+
+    records[index] = item;
+    saveTallyEntries(records);
+    return item;
+  }
+  return null;
+};
+
+// --- Bill Not Received Operations ---
+export const getBillNotReceived = () => {
+  const data = getFromStorage(STORAGE_KEYS.BILL_NOT_RECEIVED);
+  if (!data) {
+    const dummy = [
+      {
+        id: "LIFT-2911",
+        indentNumber: "IND-9912",
+        poNumber: "PO-2026-0911",
+        vendorName: "Prism Johnson Cement",
+        projectName: "Pratap Site A",
+        productName: "OPC 53 Cement",
+        billStatus: "Pending",
+        plannedDate: "2026-05-18",
+        billNo: "",
+        qty: 250,
+        leadTime: "3 Days",
+        typeOfBill: "GST Tax Invoice",
+        billAmount: 112500,
+        discountAmount: 2500,
+        paymentType: "Credit - 30 Days",
+        advanceAmount: 10000,
+        photoOfBill: "",
+        transportationInclude: "Yes",
+        transporterName: "Lucknow Cargo Express",
+        amount: 7500,
+        challanNo: "CH-98122",
+        challanImage: "",
+        statusOfBill: "",
+        billImage: "",
+        timestamp: "2026-05-15T09:00:00.000Z"
+      },
+      {
+        id: "LIFT-3012",
+        indentNumber: "IND-8821",
+        poNumber: "PO-2026-0812",
+        vendorName: "TATA Steel Ltd",
+        projectName: "Gomti Nagar Extension",
+        productName: "TMT Fe 550 Rebars 12mm",
+        billStatus: "Pending",
+        plannedDate: "2026-05-19",
+        billNo: "",
+        qty: 15,
+        leadTime: "5 Days",
+        typeOfBill: "GST Tax Invoice",
+        billAmount: 780000,
+        discountAmount: 15000,
+        paymentType: "Advance Payment",
+        advanceAmount: 200000,
+        photoOfBill: "",
+        transportationInclude: "No",
+        transporterName: "TATA Logistics Ltd",
+        amount: 0,
+        challanNo: "CH-88192",
+        challanImage: "",
+        statusOfBill: "",
+        billImage: "",
+        timestamp: "2026-05-16T10:00:00.000Z"
+      },
+      {
+        id: "LIFT-3104",
+        indentNumber: "IND-7711",
+        poNumber: "PO-2026-0701",
+        vendorName: "Berger Paints India",
+        projectName: "Vrindavan Yojna Site",
+        productName: "Easy Clean Emulsion White",
+        billStatus: "Pending",
+        plannedDate: "2026-05-20",
+        billNo: "",
+        qty: 80,
+        leadTime: "2 Days",
+        typeOfBill: "GST Tax Invoice",
+        billAmount: 48000,
+        discountAmount: 1200,
+        paymentType: "Part Payment",
+        advanceAmount: 0,
+        photoOfBill: "",
+        transportationInclude: "Yes",
+        transporterName: "Delhivery Surface",
+        amount: 1800,
+        challanNo: "CH-77821",
+        challanImage: "",
+        statusOfBill: "",
+        billImage: "",
+        timestamp: "2026-05-17T11:00:00.000Z"
+      },
+      {
+        id: "LIFT-4091",
+        indentNumber: "IND-6602",
+        poNumber: "PO-2026-0610",
+        vendorName: "Polycab Wires Ltd",
+        projectName: "Chinar Heights B",
+        productName: "3-Core Copper Flexible Cable",
+        billStatus: "Received",
+        plannedDate: "2026-05-21",
+        billNo: "BILL-2283",
+        qty: 450,
+        leadTime: "4 Days",
+        typeOfBill: "GST Tax Invoice",
+        billAmount: 185000,
+        discountAmount: 5000,
+        paymentType: "Immediate RTGS",
+        advanceAmount: 50000,
+        photoOfBill: "",
+        transportationInclude: "Yes",
+        transporterName: "Speed Safe Carriers",
+        amount: 12000,
+        challanNo: "CH-66029",
+        challanImage: "",
+        statusOfBill: "Ok",
+        billImage: "https://images.unsplash.com/photo-1554415707-6e8cfc93fe23?w=500",
+        timestamp: "2026-05-17T12:00:00.000Z"
+      },
+      {
+        id: "LIFT-5120",
+        indentNumber: "IND-5509",
+        poNumber: "PO-2026-0504",
+        vendorName: "Kirloskar Pumps",
+        projectName: "Alambagh Metro Hub",
+        productName: "10HP Submersible Pump",
+        billStatus: "Pending",
+        plannedDate: "2026-05-22",
+        billNo: "",
+        qty: 4,
+        leadTime: "6 Days",
+        typeOfBill: "GST Tax Invoice",
+        billAmount: 142000,
+        discountAmount: 3000,
+        paymentType: "Credit - 30 Days",
+        advanceAmount: 30000,
+        photoOfBill: "",
+        transportationInclude: "No",
+        transporterName: "Self Picked",
+        amount: 0,
+        challanNo: "CH-55912",
+        challanImage: "",
+        statusOfBill: "",
+        billImage: "",
+        timestamp: "2026-05-17T13:00:00.000Z"
+      },
+      {
+        id: "LIFT-6612",
+        indentNumber: "IND-4481",
+        poNumber: "PO-2026-0422",
+        vendorName: "Havells India",
+        projectName: "Sector-18 Corporate Tower",
+        productName: "1200mm Premium Ceiling Fan",
+        billStatus: "Received",
+        plannedDate: "2026-05-23",
+        billNo: "BILL-5502",
+        qty: 35,
+        leadTime: "1 Day",
+        typeOfBill: "GST Tax Invoice",
+        billAmount: 98000,
+        discountAmount: 2000,
+        paymentType: "Credit - 30 Days",
+        advanceAmount: 0,
+        photoOfBill: "",
+        transportationInclude: "No",
+        transporterName: "Professional Couriers",
+        amount: 0,
+        challanNo: "CH-44810",
+        challanImage: "",
+        statusOfBill: "Not Ok",
+        billImage: "https://images.unsplash.com/photo-1554415707-6e8cfc93fe23?w=500",
+        timestamp: "2026-05-17T14:00:00.000Z"
+      }
+    ];
+    saveToStorage(STORAGE_KEYS.BILL_NOT_RECEIVED, dummy);
+    return dummy;
+  }
+  return data;
+};
+
+export const saveBillNotReceived = (records) => saveToStorage(STORAGE_KEYS.BILL_NOT_RECEIVED, records);
+
+export const updateBillNotReceived = (id, updates) => {
+  const records = getBillNotReceived();
+  const idx = records.findIndex(r => r.id === id || String(r.id) === String(id));
+  if (idx !== -1) {
+    records[idx] = { ...records[idx], ...updates };
+    saveBillNotReceived(records);
+    return records[idx];
+  }
+  return null;
+};
+
+// --- Store Issues Operations ---
+export const getStoreIssues = () => {
+  const data = getFromStorage(STORAGE_KEYS.STORE_ISSUES);
+  if (!data) {
+    const dummy = [
+      { id: "ISS-2026-901", date: "2026-05-10", issuedTo: "Ramesh Kumar (Supervisor)", department: "Civil Works", projectName: "Pratap Site A", itemName: "OPC 53 Cement", qty: 50, uom: "Bags", authorizedBy: "S. P. Singh (Project Manager)", remarks: "Issued for slab casting foundation" },
+      { id: "ISS-2026-902", date: "2026-05-11", issuedTo: "Amit Singh (Foreman)", department: "Structure & Steel", projectName: "Gomti Nagar Extension", itemName: "TMT Fe 550 Rebars 12mm", qty: 4, uom: "MT", authorizedBy: "R. K. Verma (Technical Lead)", remarks: "Issued for column reinforcement" },
+      { id: "ISS-2026-903", date: "2026-05-12", issuedTo: "Vinay Shukla (Site Engineer)", department: "Finishing & Paint", projectName: "Vrindavan Yojna Site", itemName: "Easy Clean Emulsion White", qty: 10, uom: "Liters", authorizedBy: "A. K. Mishra (HOD Works)", remarks: "Issued for lobby paint touchups" },
+      { id: "ISS-2026-904", date: "2026-05-13", issuedTo: "Suresh Yadav (Electrical Head)", department: "Electrical", projectName: "Chinar Heights B", itemName: "3-Core Copper Flexible Cable", qty: 120, uom: "Meters", authorizedBy: "S. P. Singh (Project Manager)", remarks: "Issued for block-A wiring" },
+      { id: "ISS-2026-905", date: "2026-05-14", issuedTo: "Kapil Dev (Plumbing Lead)", department: "Plumbing", projectName: "Alambagh Metro Hub", itemName: "10HP Submersible Pump", qty: 1, uom: "Nos", authorizedBy: "R. K. Verma (Technical Lead)", remarks: "Issued for main sump installation" },
+      { id: "ISS-2026-906", date: "2026-05-15", issuedTo: "Mohit Sharma (Senior Mason)", department: "Masonry", projectName: "Charbagh Depot", itemName: "1200mm Premium Ceiling Fan", qty: 12, uom: "Nos", authorizedBy: "A. K. Mishra (HOD Works)", remarks: "Issued for labor quarters" }
+    ];
+    saveToStorage(STORAGE_KEYS.STORE_ISSUES, dummy);
+    return dummy;
+  }
+  return data;
+};
+
+export const saveStoreIssues = (records) => saveToStorage(STORAGE_KEYS.STORE_ISSUES, records);
+
+export const addStoreIssue = (record) => {
+  const records = getStoreIssues();
+  const newRecord = {
+    ...record,
+    id: `ISS-2026-${100 + records.length + 1}`
+  };
+  records.push(newRecord);
+  saveStoreIssues(records);
+  return newRecord;
+};
+
+// --- Store Returns Operations ---
+export const getStoreReturns = () => {
+  const data = getFromStorage(STORAGE_KEYS.STORE_RETURNS);
+  if (!data) {
+    const dummy = [
+      { id: "RET-2026-401", date: "2026-05-13", originalSlipNo: "ISS-2026-901", returnedBy: "Ramesh Kumar (Supervisor)", itemName: "OPC 53 Cement", qty: 5, uom: "Bags", reason: "Unused excess material", condition: "Good - Resellable / Reissuable" },
+      { id: "RET-2026-402", date: "2026-05-16", originalSlipNo: "ISS-2026-903", returnedBy: "Vinay Shukla (Site Engineer)", itemName: "Easy Clean Emulsion White", qty: 2, uom: "Liters", reason: "Leftover container seals intact", condition: "Perfect - Unopened" }
+    ];
+    saveToStorage(STORAGE_KEYS.STORE_RETURNS, dummy);
+    return dummy;
+  }
+  return data;
+};
+
+export const saveStoreReturns = (records) => saveToStorage(STORAGE_KEYS.STORE_RETURNS, records);
+
+export const addStoreReturn = (record) => {
+  const records = getStoreReturns();
+  const newRecord = {
+    ...record,
+    id: `RET-2026-${100 + records.length + 1}`
+  };
+  records.push(newRecord);
+  saveStoreReturns(records);
+  return newRecord;
+};
+
+// --- Perpetual Inventory Operations ---
+export const getInventory = () => {
+  const data = getFromStorage(STORAGE_KEYS.INVENTORY);
+  if (!data) {
+    const dummy = [
+      { item: "OPC 53 Cement", firmName: "Pratap Engineering Site A", department: "Civil Works", groupHead: "Materials", uom: "Bags", status: "Active", indented: 500, approved: 500, purchaseReturn: 0, liftingQty: 450, inTransit: 50, issueReturn: 5, issued: 250, stTo: 20, stFrom: 10, quantity: 195, totalPrice: 74100 },
+      { item: "TMT Fe 550 Rebars 12mm", firmName: "Gomti Nagar Extension", department: "Structure & Steel", groupHead: "Metals", uom: "MT", status: "Active", indented: 30, approved: 30, purchaseReturn: 0, liftingQty: 25, inTransit: 5, issueReturn: 0, issued: 18, stTo: 0, stFrom: 2, quantity: 9, totalPrice: 468000 },
+      { item: "Easy Clean Emulsion White", firmName: "Vrindavan Yojna Site", department: "Finishing & Paint", groupHead: "Chemicals", uom: "Liters", status: "Active", indented: 200, approved: 200, purchaseReturn: 2, liftingQty: 180, inTransit: 0, issueReturn: 2, issued: 95, stTo: 10, stFrom: 0, quantity: 75, totalPrice: 26250 },
+      { item: "3-Core Copper Flexible Cable", firmName: "Chinar Heights B", department: "Electrical", groupHead: "Cables", uom: "Meters", status: "Active", indented: 1000, approved: 1000, purchaseReturn: 0, liftingQty: 800, inTransit: 200, issueReturn: 10, issued: 450, stTo: 50, stFrom: 20, quantity: 330, totalPrice: 39600 },
+      { item: "10HP Submersible Pump", firmName: "Alambagh Metro Hub", department: "Plumbing", groupHead: "Machinery", uom: "Nos", status: "Critical", indented: 5, approved: 5, purchaseReturn: 0, liftingQty: 4, inTransit: 1, issueReturn: 0, issued: 3, stTo: 0, stFrom: 0, quantity: 1, totalPrice: 85000 },
+      { item: "1200mm Premium Ceiling Fan", firmName: "Sector-18 Corporate Tower", department: "Electrical", groupHead: "Appliances", uom: "Nos", status: "Active", indented: 120, approved: 120, purchaseReturn: 0, liftingQty: 100, inTransit: 20, issueReturn: 0, issued: 60, stTo: 10, stFrom: 5, quantity: 35, totalPrice: 98000 },
+      { item: "3 Phase AC Contractor", firmName: "Hazratganj Plaza", department: "Electrical", groupHead: "Spares", uom: "Nos", status: "Active", indented: 25, approved: 25, purchaseReturn: 0, liftingQty: 20, inTransit: 5, issueReturn: 0, issued: 12, stTo: 2, stFrom: 0, quantity: 6, totalPrice: 27000 },
+      { item: "Rapid Hardening Cement", firmName: "Charbagh Depot", department: "Civil Works", groupHead: "Materials", uom: "Bags", status: "Active", indented: 300, approved: 300, purchaseReturn: 0, liftingQty: 280, inTransit: 20, issueReturn: 0, issued: 210, stTo: 15, stFrom: 5, quantity: 60, totalPrice: 25200 }
+    ];
+    saveToStorage(STORAGE_KEYS.INVENTORY, dummy);
+    return dummy;
+  }
+  return data;
+};
+
+export const saveInventory = (records) => saveToStorage(STORAGE_KEYS.INVENTORY, records);
+
+// --- Quotation/Enquiry History Operations ---
+export const getQuotationHistory = () => {
+  const data = getFromStorage(STORAGE_KEYS.QUOTATION_HISTORY);
+  if (!data) {
+    const dummy = [
+      {
+        timestamp: "2026-05-12T10:30:00.000Z",
+        quatationNo: "QT-001",
+        supplierName: "Reliance Industries",
+        adreess: "Reliance Corporate Park, Navi Mumbai",
+        gst: "22AAAAR1234A1Z1",
+        indentNo: "IND-2026-001",
+        product: "OPC 53 Cement",
+        description: "High early strength 53 grade OPC",
+        qty: "500",
+        unit: "Bags",
+        pdfLink: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        firm: "Pratap Engineering Site A",
+        firm_id: "FIRM-A",
+        token: "session-uuid-1111",
+        responded_at: "2026-05-13T12:00:00.000Z",
+        vendor_rate: 420
+      },
+      {
+        timestamp: "2026-05-12T10:30:00.000Z",
+        quatationNo: "QT-001",
+        supplierName: "Infosys Tech",
+        adreess: "Infosys Tech HQ, Bangalore",
+        gst: "29BBBBB5678B2Z2",
+        indentNo: "IND-2026-001",
+        product: "OPC 53 Cement",
+        description: "High early strength 53 grade OPC",
+        qty: "500",
+        unit: "Bags",
+        pdfLink: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        firm: "Pratap Engineering Site A",
+        firm_id: "FIRM-A",
+        token: "session-uuid-2222",
+        responded_at: null,
+        vendor_rate: null
+      },
+      {
+        timestamp: "2026-05-15T14:45:00.000Z",
+        quatationNo: "QT-002",
+        supplierName: "Wipro Limited",
+        adreess: "Wipro Campus, Doddakannelli, Bangalore",
+        gst: "29CCCCC9012C3Z3",
+        indentNo: "IND-2026-003",
+        product: "TMT Fe 550 Rebars 12mm",
+        description: "High tensile steel reinforcement",
+        qty: "30",
+        unit: "MT",
+        pdfLink: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        firm: "Gomti Nagar Extension",
+        firm_id: "FIRM-B",
+        token: "session-uuid-3333",
+        responded_at: "2026-05-16T16:00:00.000Z",
+        vendor_rate: 52000
+      }
+    ];
+    saveToStorage(STORAGE_KEYS.QUOTATION_HISTORY, dummy);
+    return dummy;
+  }
+  return data;
+};
+
+export const saveQuotationHistory = (records) => saveToStorage(STORAGE_KEYS.QUOTATION_HISTORY, records);
+
+export const insertQuotationHistory = (rows) => {
+  const history = getQuotationHistory();
+  history.push(...rows);
+  saveQuotationHistory(history);
+  return history;
+};
+

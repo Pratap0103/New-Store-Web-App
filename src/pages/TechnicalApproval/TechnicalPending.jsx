@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Edit3, Eye, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import DataTable from '../../components/DataTable';
 import TechnicalForm from './TechnicalForm';
+import ModalView from '../../components/ModalView';
 
 function VendorViewModal({ item, onClose }) {
   const vInfo    = item.vendorRateInfo || {};
@@ -9,51 +10,39 @@ function VendorViewModal({ item, onClose }) {
   const isThree  = vInfo.vendorType === 'Three Party';
 
   return (
-    <div className="fixed inset-0 lg:left-56 2xl:left-60 bg-black/60 backdrop-blur-[1px] flex items-center justify-center z-[110] p-3 animate-in fade-in duration-200">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md h-[550px] flex flex-col overflow-hidden border border-gray-200 animate-in zoom-in-95 duration-200">
-        <div className="px-4 py-2.5 border-b border-gray-100 flex items-center justify-center flex-shrink-0">
-          <h2 className="text-[11px] font-black text-gray-800 uppercase tracking-widest">Vendor Rate Details</h2>
-        </div>
-        
-        <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
-          <div className="flex items-center gap-2 px-1">
-            <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${isThree ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>
-              {vInfo.vendorType || 'Regular'}
-            </span>
-            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-tight break-words">{item.itemName}</span>
+    <ModalView isOpen={true} onClose={onClose} title="Vendor Rate Details" maxWidth="max-w-md" zIndex="z-[110]">
+      <div className="flex items-center gap-2 px-1">
+        <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${isThree ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>
+          {vInfo.vendorType || 'Regular'}
+        </span>
+        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-tight break-words">{item.itemName}</span>
+      </div>
+
+      {details.map((v, i) => (
+        <div key={i} className="bg-gray-50 rounded-xl p-4 border border-gray-100 space-y-3">
+          <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
+            <span className="h-5 w-5 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-[10px] font-bold">{i + 1}</span>
+            <span className="text-[11px] font-black text-gray-800 uppercase tracking-tight break-words">{v.name}</span>
           </div>
 
-          {details.map((v, i) => (
-            <div key={i} className="bg-gray-50 rounded-xl p-4 border border-gray-100 space-y-3">
-              <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
-                <span className="h-5 w-5 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-[10px] font-bold">{i + 1}</span>
-                <span className="text-[11px] font-black text-gray-800 uppercase tracking-tight break-words">{v.name}</span>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+            {[
+              ['Quotation No',    v.quotationNo],
+              ['Quotation Date',  v.quotationDate],
+              ['Basic Rate',      `₹${v.basicRate}`],
+              ['Payment Terms',   v.paymentTerms],
+              ['Delivery (Days)', v.deliveryTime],
+              ['Make / Brand',    v.make],
+            ].map(([label, val]) => (
+              <div key={label} className="space-y-0.5">
+                <span className="text-[8px] text-gray-400 uppercase font-bold block tracking-wider">{label}</span>
+                <span className="text-[10px] font-semibold text-gray-700 break-words block">{val || '-'}</span>
               </div>
-
-              <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                {[
-                  ['Quotation No',    v.quotationNo],
-                  ['Quotation Date',  v.quotationDate],
-                  ['Basic Rate',      `₹${v.basicRate}`],
-                  ['Payment Terms',   v.paymentTerms],
-                  ['Delivery (Days)', v.deliveryTime],
-                  ['Make / Brand',    v.make],
-                ].map(([label, val]) => (
-                  <div key={label} className="space-y-0.5">
-                    <span className="text-[8px] text-gray-400 uppercase font-bold block tracking-wider">{label}</span>
-                    <span className="text-[10px] font-semibold text-gray-700 break-words block">{val || '-'}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-
-        <div className="px-4 py-3 border-t border-gray-100 flex-shrink-0">
-          <button onClick={onClose} className="w-full py-2 border border-gray-200 rounded-lg text-xs text-gray-500 hover:bg-gray-50 transition font-black uppercase tracking-widest">Close</button>
-        </div>
-      </div>
-    </div>
+      ))}
+    </ModalView>
   );
 }
 

@@ -2,46 +2,35 @@ import React, { useState, useMemo } from 'react';
 import { Eye, Info } from 'lucide-react';
 import DataTable from '../../components/DataTable';
 import InfoPopover from '../../components/InfoPopover';
+import ModalView from '../../components/ModalView';
 
 function VendorViewModal({ vendor, title, onClose }) {
   if (!vendor) return null;
   return (
-    <div className="fixed inset-0 lg:left-64 2xl:left-72 bg-black/60 backdrop-blur-[1px] flex items-center justify-center z-[110] p-3 animate-in fade-in duration-200">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md h-[550px] flex flex-col overflow-hidden border border-gray-200 animate-in zoom-in-95 duration-200">
-        <div className="px-4 py-2.5 border-b border-gray-100 flex items-center justify-center flex-shrink-0">
-          <h2 className="text-[11px] font-black text-gray-800 uppercase tracking-widest">{title || 'Vendor Details'}</h2>
-        </div>
-        
-        <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
-          <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 space-y-3">
-            <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
-              <span className="h-5 w-5 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-[10px] font-bold">★</span>
-              <span className="text-[11px] font-black text-gray-800 uppercase tracking-tight break-words">{vendor.name}</span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-              {[
-                ['Quotation No',    vendor.quotationNo],
-                ['Quotation Date',  vendor.quotationDate],
-                ['Basic Rate',      `₹${vendor.basicRate}`],
-                ['Payment Terms',   vendor.paymentTerms],
-                ['Delivery (Days)', vendor.deliveryTime],
-                ['Make / Brand',    vendor.make],
-              ].map(([label, val]) => (
-                <div key={label} className="space-y-0.5">
-                  <span className="text-[8px] text-gray-400 uppercase font-bold block tracking-wider">{label}</span>
-                  <span className="text-[10px] font-semibold text-gray-700 break-words block">{val || '-'}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+    <ModalView isOpen={true} onClose={onClose} title={title || 'Vendor Details'} maxWidth="max-w-md" zIndex="z-[110]">
+      <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 space-y-3">
+        <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
+          <span className="h-5 w-5 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-[10px] font-bold">★</span>
+          <span className="text-[11px] font-black text-gray-800 uppercase tracking-tight break-words">{vendor.name}</span>
         </div>
 
-        <div className="px-4 py-3 border-t border-gray-100 flex-shrink-0">
-          <button onClick={onClose} className="w-full py-2 border border-gray-200 rounded-lg text-xs text-gray-500 hover:bg-gray-50 transition font-black uppercase tracking-widest">Close</button>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+          {[
+            ['Quotation No',    vendor.quotationNo],
+            ['Quotation Date',  vendor.quotationDate],
+            ['Basic Rate',      `₹${vendor.basicRate}`],
+            ['Payment Terms',   vendor.paymentTerms],
+            ['Delivery (Days)', vendor.deliveryTime],
+            ['Make / Brand',    vendor.make],
+          ].map(([label, val]) => (
+            <div key={label} className="space-y-0.5">
+              <span className="text-[8px] text-gray-400 uppercase font-bold block tracking-wider">{label}</span>
+              <span className="text-[10px] font-semibold text-gray-700 break-words block">{val || '-'}</span>
+            </div>
+          ))}
         </div>
       </div>
-    </div>
+    </ModalView>
   );
 }
 

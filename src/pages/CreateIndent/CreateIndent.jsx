@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { 
   Plus, Search, Filter, Eye, X, Upload, Calendar, 
   ChevronLeft, ChevronRight, FileText, Trash2, Info, Check, Paperclip,
-  RotateCcw, Tag, User, Layers, Box, Ruler
+  RotateCcw, Tag, User, Layers, Box, Ruler, PackagePlus
 } from 'lucide-react';
 import { 
   getCompanies, getDepartments, getGroupHeads, 
@@ -532,19 +532,10 @@ export default function CreateIndent() {
         onSubmit={handleSubmit}
         submitText={loading ? 'Creating...' : 'Save Indent'}
         maxWidth="max-w-3xl"
-        extraFooterAction={
-          <button
-            type="button"
-            onClick={handleAddItem}
-            className="flex-1 px-3 py-1.5 bg-sky-50 border border-sky-100 text-sky-600 rounded-lg hover:bg-sky-100 transition-all active:scale-[0.98] text-[10px] md:text-xs uppercase tracking-wider flex items-center justify-center gap-1.5"
-          >
-            <Plus size={14} /> Add Item
-          </button>
-        }
       >
-        <div className="space-y-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 pb-4 border-b border-gray-100">
-            <div className="space-y-1">
+        <div className="space-y-3 md:space-y-5">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4 pb-3 md:pb-4 border-b border-gray-100">
+            <div className="space-y-1 col-span-2 sm:col-span-1">
               <label className="block text-[11px] md:text-[13px] text-gray-700 uppercase tracking-tight">Firm Name *</label>
               <SearchableDropdown
                 options={companies.map(c => ({ value: c.name, label: c.name }))}
@@ -564,7 +555,7 @@ export default function CreateIndent() {
                 required
               />
             </div>
-            <div className="sm:col-span-2 lg:col-span-1 space-y-1">
+            <div className="space-y-1">
               <label className="block text-[11px] md:text-[13px] text-gray-700 uppercase tracking-tight">Indent Status *</label>
               <SearchableDropdown
                 options={[
@@ -578,27 +569,27 @@ export default function CreateIndent() {
             </div>
           </div>
 
-          <div className="pt-1">
-            <h3 className="text-[10px] md:text-xs text-gray-500 uppercase tracking-widest mb-3">Items Configuration</h3>
+          <div className="pt-1 hidden md:block">
+            <h3 className="text-[10px] md:text-xs text-gray-500 uppercase tracking-widest mb-1">Items Configuration</h3>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-3 md:space-y-6">
             {formData.items.map((item, index) => (
-              <div key={index} className="relative p-4 md:p-5 bg-gray-50/50 rounded-xl border border-gray-200 space-y-4 transition-all hover:bg-white hover:shadow-md">
-                <div className="flex justify-between items-center border-b border-gray-200/50 pb-3 mb-1">
-                   <span className="text-[10px] md:text-xs text-indigo-500 uppercase tracking-widest bg-indigo-50 px-2.5 py-1 rounded-full">Item Details #{index + 1}</span>
+              <div key={index} className="relative p-2.5 md:p-5 bg-gray-50/50 rounded-xl border border-gray-200 space-y-2.5 md:space-y-4 transition-all hover:bg-white hover:shadow-md">
+                <div className="flex justify-between items-center border-b border-gray-200/50 pb-2 mb-1">
+                   <span className="text-[9px] md:text-xs text-indigo-500 uppercase tracking-widest bg-indigo-50 px-2 py-0.5 md:px-2.5 md:py-1 rounded-full">Item Details #{index + 1}</span>
                    {formData.items.length > 1 && (
                     <button
                       type="button"
                       onClick={() => handleRemoveItem(index)}
                       className="text-gray-300 hover:text-red-500 transition-all hover:scale-110 active:scale-90"
                     >
-                      <Trash2 size={18} />
+                      <Trash2 size={16} />
                     </button>
                   )}
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-4">
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-2 gap-y-2 md:gap-x-4 md:gap-y-4">
                   <div className="space-y-1">
                     <label className="block text-[10px] md:text-[12px] text-gray-500 uppercase tracking-tighter">Department *</label>
                     <SearchableDropdown
@@ -619,7 +610,7 @@ export default function CreateIndent() {
                     />
                   </div>
 
-                  <div className="space-y-1">
+                  <div className="space-y-1 col-span-2 sm:col-span-1">
                     <label className="block text-[10px] md:text-[12px] text-gray-500 uppercase tracking-tighter">Item Name *</label>
                     <SearchableDropdown
                       options={masterItems
@@ -666,7 +657,7 @@ export default function CreateIndent() {
                     />
                   </div>
 
-                  <div className="space-y-1">
+                  <div className="space-y-1 col-span-2 sm:col-span-1">
                     <label className="block text-[10px] md:text-[12px] text-gray-500 uppercase tracking-tighter">Attachment</label>
                     <div className="flex items-center gap-2">
                       <label className="flex-1 cursor-pointer group">
@@ -699,6 +690,18 @@ export default function CreateIndent() {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Add Item Action Button */}
+          <div className="pt-3 border-t border-gray-100 flex justify-end">
+            <button
+              type="button"
+              onClick={handleAddItem}
+              className="w-full sm:w-auto px-5 py-2.5 bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold rounded-lg hover:bg-emerald-100 transition-all active:scale-[0.98] text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm animate-pulse-subtle"
+            >
+              <PackagePlus size={16} />
+              <span>Add Item</span>
+            </button>
           </div>
         </div>
       </ModalForm>

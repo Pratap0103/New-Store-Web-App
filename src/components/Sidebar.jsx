@@ -22,29 +22,51 @@ import {
   ClipboardCheck,
   Tags,
   Cpu,
+  HelpCircle,
+  TrendingUp,
   UserCheck,
   History,
   PackageSearch,
   Truck,
-  Package
+  Package,
+  CreditCard,
+  Ban,
+  Warehouse,
+  Coins,
+  Receipt,
+  Blocks
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
-import { getIndents, getLiftingRecords, getStoreInRecords, getPOs } from '../utils/storageManager';
+import { getIndents, getLiftingRecords, getStoreInRecords, getPOs, getDirectStoreInRecords, getPayments, getRejectGRNRecords, getDebitNotes, getTallyEntries, getBillNotReceived, getQuotationHistory } from '../utils/storageManager';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const [isMastersOpen, setIsMastersOpen] = useState(false);
+  const [isAuditOpen, setIsAuditOpen] = useState(false);
+  const [isStoreDataOpen, setIsStoreDataOpen] = useState(false);
   const [counts, setCounts] = useState({ 
     approval: 0, 
     vendorRate: 0, 
     technical: 0, 
     management: 0, 
+
     poToBeCreate: 0, 
     lifting: 0, 
     storeIn: 0,
     hodCheck: 0,
-    freightPayment: 0
+    freightPayment: 0,
+    makePayment: 0,
+    rejectGRN: 0,
+    sendDebit: 0,
+    totalAudit: 0,
+    audit: 0,
+    rectify: 0,
+    reaudit: 0,
+    tally: 0,
+    again: 0,
+    billNotReceived: 0,
+    enquiry: 0
   });
 
   useEffect(() => {
@@ -63,6 +85,14 @@ const Sidebar = ({ isOpen, onClose }) => {
 
       // 2. Vendor Rate: status === 'Rate Update'
       const vendorRateCount = indents.filter(i => i.status === 'Rate Update').length;
+
+      // Enquiry: APPROVED items with no quotation history
+      const quotationHistory = getQuotationHistory() || [];
+      const enquiryCount = flattenedItems.filter(item => {
+        const isApproved = item.approvalStatus === 'APPROVED';
+        const alreadyHasEnquiry = quotationHistory.some(h => h.indentNo === (item.id || item.indentId) && h.product === item.productName);
+        return isApproved && !alreadyHasEnquiry;
+      }).length;
 
       // 3. Technical Approval: vendorRateInfo && !technicalApproval
       const technicalCount = flattenedItems.filter(i => i.vendorRateInfo && !i.technicalApproval).length;
@@ -86,6 +116,44 @@ const Sidebar = ({ isOpen, onClose }) => {
       // 9. Freight Payment: lifting records with transportation === 'Yes' and no payment
       const freightPaymentCount = lifting.filter(i => i.transportation === 'Yes' && (!i.freightPaymentStatus || i.freightPaymentStatus === 'Pending')).length;
 
+      // 10. Make Payment
+      const directStoreIn = getDirectStoreInRecords() || [];
+      const payments = getPayments() || [];
+      const approvedStoreIn = storeInRecords.filter(r => r.hodStatus === 'Approved');
+      
+      let makePaymentCount = 0;
+      const checkPaymentPending = (id, amount) => {
+        const related = payments.filter(p => p.referenceId === id);
+        const total = related.reduce((sum, p) => sum + (parseFloat(p.paidAmount) || 0), 0);
+        if (total < amount) makePaymentCount++;
+      };
+      
+      approvedStoreIn.forEach(r => checkPaymentPending(r.id, r.totalAmount || r.items?.[0]?.amount || 0));
+      directStoreIn.forEach(r => checkPaymentPending(r.id, parseFloat(r.billAmount) || 0));
+
+      // 11. Reject GRN
+      const grnRecords = getRejectGRNRecords() || [];
+      const rejectedStoreIn = storeInRecords.filter(r => r.hodStatus === 'Rejected');
+      const rejectGRNCount = rejectedStoreIn.filter(r => !grnRecords.some(g => g.referenceId === r.id)).length;
+
+      // 12. Send Debit Note
+      const allDebitNotes = getDebitNotes() || [];
+      const sendDebitCount = lifting.filter(lift => !allDebitNotes.some(dn => dn.liftNumber === lift.id)).length;
+
+      // 13. Audit Data stages
+      const tallyEntries = getTallyEntries() || [];
+      const activeTally = tallyEntries.filter(t => !t.isCompleted);
+      const auditCount = activeTally.filter(t => t.currentStage === 'AUDIT').length;
+      const rectifyCount = activeTally.filter(t => t.currentStage === 'RECTIFY').length;
+      const reauditCount = activeTally.filter(t => t.currentStage === 'REAUDIT').length;
+      const tallyCount = activeTally.filter(t => t.currentStage === 'TALLY_ENTRY').length;
+      const againCount = activeTally.filter(t => t.currentStage === 'AGAIN_AUDIT').length;
+      const totalAuditCount = activeTally.length;
+
+      // 14. Bill Not Received
+      const bills = getBillNotReceived() || [];
+      const billNotReceivedCount = bills.filter(b => b.billStatus !== 'Received').length;
+
       setCounts({ 
         approval: approvalCount,
         vendorRate: vendorRateCount,
@@ -95,7 +163,18 @@ const Sidebar = ({ isOpen, onClose }) => {
         lifting: liftingCount, 
         storeIn: storeInCount,
         hodCheck: hodCheckCount,
-        freightPayment: freightPaymentCount
+        freightPayment: freightPaymentCount,
+        makePayment: makePaymentCount,
+        rejectGRN: rejectGRNCount,
+        sendDebit: sendDebitCount,
+        totalAudit: totalAuditCount,
+        audit: auditCount,
+        rectify: rectifyCount,
+        reaudit: reauditCount,
+        tally: tallyCount,
+        again: againCount,
+        billNotReceived: billNotReceivedCount,
+        enquiry: enquiryCount
       });
     };
 
@@ -114,10 +193,13 @@ const Sidebar = ({ isOpen, onClose }) => {
   };
 
   const adminMenuItems = [
+    { path: '/dashboard',           icon: TrendingUp,     label: 'Dashboard' },
     { path: '/master',              icon: LayoutGrid,     label: 'Master' },
     { path: '/create-indent',       icon: FilePlus,       label: 'Create Indent' },
     { path: '/approval-indent',     icon: ClipboardCheck, label: 'Approval Indent',     count: counts.approval },
     { path: '/vendor-rate',         icon: Tags,           label: 'Vendor Rate',         count: counts.vendorRate },
+    { path: '/enquiry',             icon: HelpCircle,     label: 'Create Enquiry',      count: counts.enquiry },
+    { path: '/enquiry-history',     icon: History,        label: 'Enquiry History' },
     { path: '/technical-approval',  icon: Cpu,            label: 'Technical Approval',  count: counts.technical },
     { path: '/management-approval', icon: UserCheck,      label: 'Management Approval', count: counts.management },
     { path: '/po-to-be-create',     icon: PackageSearch,  label: 'PO to be Create',     count: counts.poToBeCreate },
@@ -126,7 +208,51 @@ const Sidebar = ({ isOpen, onClose }) => {
     { path: '/lifting',             icon: Truck,          label: 'Lifting',             count: counts.lifting },
     { path: '/store-in',            icon: Package,        label: 'Store In',            count: counts.storeIn },
     { path: '/hod-check',           icon: ClipboardCheck, label: 'HOD Check',           count: counts.hodCheck },
-    { path: '/freight-payment',      icon: Truck,          label: 'Freight Payment',     count: counts.freightPayment },
+    { path: '/freight-payment',     icon: Truck,          label: 'Freight Payment',     count: counts.freightPayment },
+    { path: '/make-payment',        icon: CreditCard,     label: 'Make Payment',        count: counts.makePayment },
+    { path: '/reject-grn',          icon: Ban,            label: 'Reject for GRN',      count: counts.rejectGRN },
+    { path: '/send-debit',          icon: FileText,       label: 'Send Debit Note',     count: counts.sendDebit },
+    
+    // Collapsible Audit Data Menu
+    {
+      isNested: true,
+      isOpen: isAuditOpen,
+      onToggle: () => setIsAuditOpen(!isAuditOpen),
+      icon: ShieldCheck,
+      label: 'Audit Data',
+      count: counts.totalAudit,
+      subItems: [
+        { path: '/audit-all-pending', label: 'All Pending', count: counts.totalAudit },
+        { path: '/audit-stage', label: 'Audit stage', count: counts.audit },
+        { path: '/rectify-stage', label: 'Rectify stage', count: counts.rectify },
+        { path: '/reaudit-stage', label: 'Reaudit stage', count: counts.reaudit },
+        { path: '/tally-entry', label: 'Tally Entry', count: counts.tally },
+        { path: '/again-audit', label: 'Again Audit', count: counts.again }
+      ]
+    },
+
+    // PC Dashboard Route
+    { path: '/pcdb', icon: Coins, label: 'PC Dashboard' },
+
+    // Collapsible Store Data Menu
+    {
+      isNested: true,
+      isOpen: isStoreDataOpen,
+      onToggle: () => setIsStoreDataOpen(!isStoreDataOpen),
+      icon: Warehouse,
+      label: 'Store Data',
+      subItems: [
+        { path: '/store-issue', label: 'Store Issue' },
+        { path: '/store-issue-return', label: 'Store Return' }
+      ]
+    },
+
+    // Inventory Route
+    { path: '/inventory', icon: Blocks, label: 'Inventory' },
+
+    // Bill Not Received Route
+    { path: '/bill-not-received', icon: Receipt, label: 'Bill Not Received', count: counts.billNotReceived },
+
     { path: '/settings',            icon: Settings,       label: 'Settings' },
   ];
 
@@ -148,7 +274,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed top-0 left-0 h-full w-56 2xl:w-60 bg-white border-r border-indigo-100 z-50 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed top-0 left-0 h-full w-64 sm:w-72 lg:w-56 2xl:w-60 bg-white border-r border-indigo-100 z-50 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex flex-col h-full">
           {/* Logo Section */}
           <div className="p-4 border-b border-indigo-100 flex items-center justify-between">
@@ -188,13 +314,18 @@ const Sidebar = ({ isOpen, onClose }) => {
                             to={sub.path}
                             onClick={onClose}
                             className={({ isActive }) => `
-                              flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200
+                              flex items-center justify-between px-4 py-2.5 rounded-lg transition-all duration-200
                               ${isActive 
                                 ? 'bg-indigo-100/50 text-indigo-600' 
                                 : 'text-gray-600 hover:bg-indigo-50/50 hover:text-indigo-600'}
                             `}
                           >
                             <span className="text-sm leading-tight whitespace-nowrap font-black">{sub.label}</span>
+                            {sub.count > 0 && (
+                              <span className="bg-indigo-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-sm">
+                                {sub.count}
+                              </span>
+                            )}
                           </NavLink>
                         ))}
                       </div>

@@ -36,21 +36,21 @@ function DraggableVendor({ vendor, id, isInSlot, onClick }) {
       {...listeners}
       {...attributes}
       onClick={() => onClick && onClick(vendor)}
-      className={`flex flex-col gap-1.5 p-2 bg-white border border-gray-200 rounded-lg shadow-sm cursor-grab active:cursor-grabbing hover:border-indigo-300 transition-all select-none ${isDragging ? 'opacity-50 border-indigo-500 ring-2 ring-indigo-100' : ''}`}
+      className={`flex flex-col gap-1 md:gap-1.5 p-1.5 md:p-2 bg-white border border-gray-200 rounded-lg shadow-sm cursor-grab active:cursor-grabbing hover:border-indigo-300 transition-all select-none ${isDragging ? 'opacity-50 border-indigo-500 ring-2 ring-indigo-100' : ''}`}
     >
-      <div className={`flex items-center gap-1.5 ${!isInSlot ? 'border-b border-gray-100 pb-1.5' : ''}`}>
+      <div className={`flex items-center gap-1.5 ${!isInSlot ? 'border-b border-gray-100 pb-1 md:pb-1.5' : ''}`}>
         {!isInSlot && <GripVertical size={12} className="text-gray-300 flex-shrink-0" />}
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-black text-gray-900 leading-tight uppercase break-words">{vendor.name}</p>
+          <p className="text-[9px] md:text-[10px] font-black text-gray-900 leading-tight uppercase break-words">{vendor.name}</p>
           <div className="flex justify-between items-center mt-0.5">
-            <p className="text-[10px] text-indigo-600 font-bold">₹{vendor.basicRate}</p>
-            {!isInSlot && <span className="text-[8px] font-bold text-gray-400">{vendor.quotationNo}</span>}
+            <p className="text-[9px] md:text-[10px] text-indigo-600 font-bold">₹{vendor.basicRate}</p>
+            {!isInSlot && <span className="text-[7px] md:text-[8px] font-bold text-gray-400">{vendor.quotationNo}</span>}
           </div>
         </div>
       </div>
       
       {!isInSlot && (
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+        <div className="grid grid-cols-2 gap-x-2 md:gap-x-3 gap-y-0.5 md:gap-y-1.5">
           <div>
             <span className="text-[8px] text-gray-400 uppercase font-bold block">QTN Date</span>
             <span className="text-[10px] text-gray-600 font-medium">{vendor.quotationDate}</span>
@@ -83,7 +83,7 @@ function DroppableSlot({ id, children, rank }) {
   return (
     <div
       ref={setNodeRef}
-      className={`rounded-xl border-2 border-dashed p-2 min-h-[80px] transition-all ${
+      className={`rounded-xl border-2 border-dashed p-1.5 md:p-2 min-h-[50px] md:min-h-[80px] transition-all ${
         isOver 
           ? (rank ? `${colors.bg} ${colors.border}` : 'bg-indigo-50 border-indigo-300') 
           : 'border-gray-200 bg-gray-50'
@@ -279,69 +279,69 @@ export default function TechnicalForm({ item, onClose, onSuccess }) {
       maxWidth="max-w-lg"
     >
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <div className="space-y-4">
+        <div className="space-y-1.5 md:space-y-4">
           {/* Prefill Section - Styled like Vendor Rate Update */}
-          <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 space-y-3">
-            <div className="grid grid-cols-2 gap-x-3">
+          <div className="bg-gray-50 p-1.5 md:p-4 rounded-xl border border-gray-100 space-y-1.5 md:space-y-3">
+            <div className="grid grid-cols-2 gap-x-2 md:gap-x-3">
               <div className="space-y-0.5">
-                <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-tight">Serial No</label>
-                <div className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[11px] md:text-[13px] h-[32px] md:h-[38px] flex items-center font-medium text-indigo-600">
+                <label className="block text-[9px] md:text-[11px] font-medium text-gray-500 uppercase tracking-tight">Serial No</label>
+                <div className="w-full bg-white border border-gray-200 rounded-md md:rounded-lg px-2 md:px-3 py-0.5 md:py-1.5 text-[10px] md:text-[13px] h-[22px] md:h-[38px] flex items-center font-medium text-indigo-600">
                   {item.serialNo}
                 </div>
               </div>
               <div className="space-y-0.5">
-                <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-tight">Item Count</label>
-                <div className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[11px] md:text-[13px] h-[32px] md:h-[38px] flex items-center text-gray-700">
+                <label className="block text-[9px] md:text-[11px] font-medium text-gray-500 uppercase tracking-tight">Item Count</label>
+                <div className="w-full bg-white border border-gray-200 rounded-md md:rounded-lg px-2 md:px-3 py-0.5 md:py-1.5 text-[10px] md:text-[13px] h-[22px] md:h-[38px] flex items-center text-gray-700">
                   {item.itemCount}
                 </div>
               </div>
             </div>
 
             <div className="space-y-0.5">
-              <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-tight">Firm Name</label>
-              <div className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[11px] md:text-[13px] h-[32px] md:h-[38px] flex items-center text-gray-700">
+              <label className="block text-[9px] md:text-[11px] font-medium text-gray-500 uppercase tracking-tight">Firm Name</label>
+              <div className="w-full bg-white border border-gray-200 rounded-md md:rounded-lg px-2 md:px-3 py-0.5 md:py-1.5 text-[10px] md:text-[13px] h-[22px] md:h-[38px] flex items-center text-gray-700">
                 {item.firmName}
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-x-3">
+            <div className="grid grid-cols-2 gap-x-2 md:gap-x-3">
               <div className="space-y-0.5">
-                <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-tight">Department</label>
-                <div className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[11px] md:text-[13px] h-[32px] md:h-[38px] flex items-center text-gray-700 break-words">
+                <label className="block text-[9px] md:text-[11px] font-medium text-gray-500 uppercase tracking-tight">Department</label>
+                <div className="w-full bg-white border border-gray-200 rounded-md md:rounded-lg px-2 md:px-3 py-0.5 md:py-1.5 text-[10px] md:text-[13px] h-[22px] md:h-[38px] flex items-center text-gray-700 break-words truncate">
                   {item.department}
                 </div>
               </div>
               <div className="space-y-0.5">
-                <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-tight">Group-Head</label>
-                <div className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[11px] md:text-[13px] h-[32px] md:h-[38px] flex items-center text-gray-700 break-words">
+                <label className="block text-[9px] md:text-[11px] font-medium text-gray-500 uppercase tracking-tight">Group-Head</label>
+                <div className="w-full bg-white border border-gray-200 rounded-md md:rounded-lg px-2 md:px-3 py-0.5 md:py-1.5 text-[10px] md:text-[13px] h-[22px] md:h-[38px] flex items-center text-gray-700 break-words truncate">
                   {item.groupHead}
                 </div>
               </div>
             </div>
 
             <div className="space-y-0.5">
-              <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-tight">Item Name</label>
-              <div className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[11px] md:text-[13px] min-h-[32px] md:min-h-[38px] flex items-center font-semibold text-indigo-600 uppercase break-words py-2">
+              <label className="block text-[9px] md:text-[11px] font-medium text-gray-500 uppercase tracking-tight">Item Name</label>
+              <div className="w-full bg-white border border-gray-200 rounded-md md:rounded-lg px-2 md:px-3 py-0.5 md:py-1.5 text-[10px] md:text-[13px] min-h-[22px] md:min-h-[38px] flex items-center font-semibold text-indigo-600 uppercase break-words">
                 {item.itemName}
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-2 md:gap-x-3 gap-y-1.5 md:gap-y-2">
               <div className="space-y-0.5">
-                <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-tight">UOM</label>
-                <div className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[11px] md:text-[13px] h-[32px] md:h-[38px] flex items-center text-gray-700">
+                <label className="block text-[9px] md:text-[11px] font-medium text-gray-500 uppercase tracking-tight">UOM</label>
+                <div className="w-full bg-white border border-gray-200 rounded-md md:rounded-lg px-2 md:px-3 py-0.5 md:py-1.5 text-[10px] md:text-[13px] h-[22px] md:h-[38px] flex items-center text-gray-700">
                   {item.uom}
                 </div>
               </div>
               <div className="space-y-0.5">
-                <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-tight">Qty</label>
-                <div className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[11px] md:text-[13px] h-[32px] md:h-[38px] flex items-center font-bold text-indigo-600">
+                <label className="block text-[9px] md:text-[11px] font-medium text-gray-500 uppercase tracking-tight">Qty</label>
+                <div className="w-full bg-white border border-gray-200 rounded-md md:rounded-lg px-2 md:px-3 py-0.5 md:py-1.5 text-[10px] md:text-[13px] h-[22px] md:h-[38px] flex items-center font-bold text-indigo-600">
                   {item.itemQty}
                 </div>
               </div>
               <div className="space-y-0.5 col-span-2 sm:col-span-1">
-                <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-tight">Vendor Type</label>
-                <div className={`w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[11px] md:text-[13px] h-[32px] md:h-[38px] flex items-center font-black uppercase whitespace-nowrap ${vendorType === 'Three Party' ? 'text-amber-600' : 'text-blue-600'}`}>
+                <label className="block text-[9px] md:text-[11px] font-medium text-gray-500 uppercase tracking-tight">Vendor Type</label>
+                <div className={`w-full bg-white border border-gray-200 rounded-md md:rounded-lg px-2 md:px-3 py-0.5 md:py-1.5 text-[10px] md:text-[13px] h-[22px] md:h-[38px] flex items-center font-black uppercase whitespace-nowrap ${vendorType === 'Three Party' ? 'text-amber-600' : 'text-blue-600'}`}>
                   {vendorType}
                 </div>
               </div>

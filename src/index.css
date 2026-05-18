@@ -87,3 +87,12 @@ table th, table td {
 
 /* Redefining some tailwind utility defaults if needed directly */
 
+/* Custom Subtle Pulse Animation */
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.96; transform: scale(1.015); }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2.5s ease-in-out infinite;
+}

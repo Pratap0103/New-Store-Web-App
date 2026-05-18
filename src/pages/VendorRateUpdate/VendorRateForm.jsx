@@ -121,9 +121,11 @@ export default function VendorRateForm({ item, onClose, onSuccess }) {
           <button
             type="button"
             onClick={() => setStep(1)}
-            className="flex-1 px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-all font-medium text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+            className="w-full px-2 md:px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-all font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2"
           >
-            <ChevronLeft size={16} /> Back
+            <ChevronLeft size={18} className="block md:hidden" />
+            <ChevronLeft size={16} className="hidden md:block" />
+            <span className="hidden md:block">Back</span>
           </button>
         )
       }
@@ -131,43 +133,47 @@ export default function VendorRateForm({ item, onClose, onSuccess }) {
       <div className="space-y-4">
         {step === 1 ? (
           <div className="space-y-3">
-            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 grid grid-cols-1 gap-y-3">
+            <div className="bg-gray-50 p-2.5 md:p-4 rounded-xl border border-gray-100 grid grid-cols-1 gap-y-2 md:gap-y-3">
               <div className="grid grid-cols-2 gap-x-2">
                 <div className="space-y-0.5">
-                  <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-tight">Serial No</label>
-                  <div className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[11px] md:text-[13px] h-[32px] md:h-[38px] flex items-center font-medium text-indigo-600">
+                  <label className="block text-[9px] md:text-[11px] font-medium text-gray-500 uppercase tracking-tight">Serial No</label>
+                  <div className="w-full bg-white border border-gray-200 rounded-md md:rounded-lg px-2 md:px-3 py-0.5 md:py-1.5 text-[10px] md:text-[13px] h-[24px] md:h-[38px] flex items-center font-medium text-indigo-600">
                     {item.serialNo}
                   </div>
                 </div>
                 <div className="space-y-0.5">
-                  <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-tight">Item Count</label>
-                  <div className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[11px] md:text-[13px] h-[32px] md:h-[38px] flex items-center text-gray-700">
+                  <label className="block text-[9px] md:text-[11px] font-medium text-gray-500 uppercase tracking-tight">Item Count</label>
+                  <div className="w-full bg-white border border-gray-200 rounded-md md:rounded-lg px-2 md:px-3 py-0.5 md:py-1.5 text-[10px] md:text-[13px] h-[24px] md:h-[38px] flex items-center text-gray-700">
                     {item.itemCount}
                   </div>
                 </div>
               </div>
+              
               <div className="space-y-0.5">
-                <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-tight">Firm Name</label>
-                <div className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[11px] md:text-[13px] h-[32px] md:h-[38px] flex items-center text-gray-700">
+                <label className="block text-[9px] md:text-[11px] font-medium text-gray-500 uppercase tracking-tight">Firm Name</label>
+                <div className="w-full bg-white border border-gray-200 rounded-md md:rounded-lg px-2 md:px-3 py-0.5 md:py-1.5 text-[10px] md:text-[13px] h-[24px] md:h-[38px] flex items-center text-gray-700">
                   {item.firmName}
                 </div>
               </div>
 
-              <div className="space-y-0.5">
-                <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-tight">Department</label>
-                <div className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[11px] md:text-[13px] h-[32px] md:h-[38px] flex items-center text-gray-700">
-                  {item.department}
+              <div className="grid grid-cols-2 gap-x-2">
+                <div className="space-y-0.5">
+                  <label className="block text-[9px] md:text-[11px] font-medium text-gray-500 uppercase tracking-tight">Department</label>
+                  <div className="w-full bg-white border border-gray-200 rounded-md md:rounded-lg px-2 md:px-3 py-0.5 md:py-1.5 text-[10px] md:text-[13px] h-[24px] md:h-[38px] flex items-center text-gray-700 truncate">
+                    {item.department}
+                  </div>
+                </div>
+                <div className="space-y-0.5">
+                  <label className="block text-[9px] md:text-[11px] font-medium text-gray-500 uppercase tracking-tight">Group-Head</label>
+                  <div className="w-full bg-white border border-gray-200 rounded-md md:rounded-lg px-2 md:px-3 py-0.5 md:py-1.5 text-[10px] md:text-[13px] h-[24px] md:h-[38px] flex items-center text-gray-700 truncate">
+                    {item.groupHead}
+                  </div>
                 </div>
               </div>
+
               <div className="space-y-0.5">
-                <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-tight">Group-Head</label>
-                <div className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[11px] md:text-[13px] h-[32px] md:h-[38px] flex items-center text-gray-700">
-                  {item.groupHead}
-                </div>
-              </div>
-              <div className="space-y-0.5">
-                <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-tight">Item Name</label>
-                <div className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[11px] md:text-[13px] h-[32px] md:h-[38px] flex items-center font-semibold text-indigo-600 uppercase">
+                <label className="block text-[9px] md:text-[11px] font-medium text-gray-500 uppercase tracking-tight">Item Name</label>
+                <div className="w-full bg-white border border-gray-200 rounded-md md:rounded-lg px-2 md:px-3 py-0.5 md:py-1.5 text-[10px] md:text-[13px] min-h-[24px] md:min-h-[38px] flex items-center font-semibold text-indigo-600 uppercase break-words">
                   {item.itemName}
                 </div>
               </div>
@@ -212,9 +218,9 @@ export default function VendorRateForm({ item, onClose, onSuccess }) {
                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-y-1.5">
-                  <div className="space-y-0.5">
-                    <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-tight">Vendor Name *</label>
+                <div className="grid grid-cols-2 gap-x-2 gap-y-2">
+                  <div className="space-y-0.5 col-span-2">
+                    <label className="block text-[10px] md:text-[11px] font-medium text-gray-500 uppercase tracking-tight">Vendor Name *</label>
                     <SearchableDropdown
                       options={vendorOptions}
                       value={formData.vendors[idx].name}
@@ -226,54 +232,65 @@ export default function VendorRateForm({ item, onClose, onSuccess }) {
                         }
                       }}
                       placeholder="Select vendor"
-                      className="h-[32px] md:h-[38px]"
+                      className="h-[28px] md:h-[38px]"
                     />
                   </div>
 
-                  <div className="space-y-0.5">
-                    <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-tight">Quotation No *</label>
+                  <div className="space-y-0.5 col-span-2 sm:col-span-1">
+                    <label className="block text-[10px] md:text-[11px] font-medium text-gray-500 uppercase tracking-tight">Quotation No *</label>
                     <input
                       type="text"
                       value={formData.vendors[idx].quotationNo}
                       onChange={(e) => handleVendorChange(idx, 'quotationNo', e.target.value)}
                       placeholder="Enter Number"
-                      className="w-full border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-500 text-[11px] md:text-[13px] h-[32px] md:h-[38px]"
+                      className="w-full border border-gray-200 rounded-md md:rounded-lg px-2 md:px-3 py-1 md:py-1.5 focus:outline-none focus:border-indigo-500 text-[11px] md:text-[13px] h-[28px] md:h-[38px]"
                       required
                     />
                   </div>
 
-                  <div className="space-y-0.5">
-                    <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-tight">Quotation Date</label>
+                  <div className="space-y-0.5 col-span-2 sm:col-span-1">
+                    <label className="block text-[10px] md:text-[11px] font-medium text-gray-500 uppercase tracking-tight">Quotation Date</label>
                     <input
                       type="date"
                       value={formData.vendors[idx].quotationDate}
                       onChange={(e) => handleVendorChange(idx, 'quotationDate', e.target.value)}
-                      className="w-full border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-500 text-[11px] md:text-[13px] h-[32px] md:h-[38px] bg-white"
+                      className="w-full border border-gray-200 rounded-md md:rounded-lg px-2 md:px-3 py-1 md:py-1.5 focus:outline-none focus:border-indigo-500 text-[11px] md:text-[13px] h-[28px] md:h-[38px] bg-white"
                     />
                   </div>
 
                   <div className="space-y-0.5">
-                    <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-tight">Basic Rate (₹) *</label>
+                    <label className="block text-[10px] md:text-[11px] font-medium text-gray-500 uppercase tracking-tight">Basic Rate (₹) *</label>
                     <div className="relative">
-                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs md:text-sm">₹</span>
+                       <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">₹</span>
                        <input
                         type="number"
                         step="0.01"
                         value={formData.vendors[idx].basicRate}
                         onChange={(e) => handleVendorChange(idx, 'basicRate', e.target.value)}
                         placeholder="0.00"
-                        className="w-full border border-gray-200 rounded-lg pl-7 pr-3 py-1.5 focus:outline-none focus:border-indigo-500 text-[11px] md:text-[13px] h-[32px] md:h-[38px] font-medium text-indigo-600"
+                        className="w-full border border-gray-200 rounded-md md:rounded-lg pl-6 pr-2 py-1 md:py-1.5 focus:outline-none focus:border-indigo-500 text-[11px] md:text-[13px] h-[28px] md:h-[38px] font-medium text-indigo-600"
                         required
                       />
                     </div>
                   </div>
 
                   <div className="space-y-0.5">
-                    <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-tight">Payment Terms</label>
+                    <label className="block text-[10px] md:text-[11px] font-medium text-gray-500 uppercase tracking-tight">Delivery (Days)</label>
+                    <input
+                      type="number"
+                      value={formData.vendors[idx].deliveryTime}
+                      onChange={(e) => handleVendorChange(idx, 'deliveryTime', e.target.value)}
+                      placeholder="e.g. 7"
+                      className="w-full border border-gray-200 rounded-md md:rounded-lg px-2 md:px-3 py-1 md:py-1.5 focus:outline-none focus:border-indigo-500 text-[11px] md:text-[13px] h-[28px] md:h-[38px]"
+                    />
+                  </div>
+
+                  <div className="space-y-0.5 col-span-2">
+                    <label className="block text-[10px] md:text-[11px] font-medium text-gray-500 uppercase tracking-tight">Payment Terms</label>
                     <select
                       value={formData.vendors[idx].paymentTerms}
                       onChange={(e) => handleVendorChange(idx, 'paymentTerms', e.target.value)}
-                      className="w-full border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-500 text-[11px] md:text-[13px] h-[32px] md:h-[38px] bg-white"
+                      className="w-full border border-gray-200 rounded-md md:rounded-lg px-2 md:px-3 py-1 md:py-1.5 focus:outline-none focus:border-indigo-500 text-[11px] md:text-[13px] h-[28px] md:h-[38px] bg-white truncate"
                     >
                       <option value="">Select Terms</option>
                       {vendors.find(v => v.name === formData.vendors[idx].name)?.paymentTerms?.map((t, i) => (
@@ -282,25 +299,14 @@ export default function VendorRateForm({ item, onClose, onSuccess }) {
                     </select>
                   </div>
 
-                  <div className="space-y-0.5">
-                    <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-tight">Delivery Time (Days)</label>
-                    <input
-                      type="number"
-                      value={formData.vendors[idx].deliveryTime}
-                      onChange={(e) => handleVendorChange(idx, 'deliveryTime', e.target.value)}
-                      placeholder="e.g. 7"
-                      className="w-full border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-500 text-[11px] md:text-[13px] h-[32px] md:h-[38px]"
-                    />
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-tight">Make / Brand</label>
+                  <div className="space-y-0.5 col-span-2">
+                    <label className="block text-[10px] md:text-[11px] font-medium text-gray-500 uppercase tracking-tight">Make / Brand</label>
                     <input
                       type="text"
                       value={formData.vendors[idx].make}
                       onChange={(e) => handleVendorChange(idx, 'make', e.target.value)}
                       placeholder="e.g. Samsung"
-                      className="w-full border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-500 text-[11px] md:text-[13px] h-[32px] md:h-[38px]"
+                      className="w-full border border-gray-200 rounded-md md:rounded-lg px-2 md:px-3 py-1 md:py-1.5 focus:outline-none focus:border-indigo-500 text-[11px] md:text-[13px] h-[28px] md:h-[38px]"
                     />
                   </div>
                 </div>
